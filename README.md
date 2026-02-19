@@ -12,6 +12,6 @@ poetry install
 python main.py
 ```
 ## Тестирование 
-```bash
+``` bash
 pytest tests/ -v
 ```
