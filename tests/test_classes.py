@@ -61,3 +61,80 @@ def test_product_attributes_types():
     assert isinstance(product.description, str)
     assert isinstance(product.price, float)
     assert isinstance(product.quantity, int)
+
+
+def test_load_from_json_success(tmp_path):
+    """Тест успешной загрузки из JSON"""
+    # Создаем временный JSON
+    json_data = [
+        {
+            "name": "Тест",
+            "description": "Описание",
+            "products": [
+                {
+                    "name": "Товар",
+                    "description": "Описание товара",
+                    "price": 100.0,
+                    "quantity": 5
+                }
+            ]
+        }
+    ]
+
+    import json
+    json_file = tmp_path / "test.json"
+    with open(json_file, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f)
+
+    from src.classes import load_from_json
+    categories = load_from_json(str(json_file))
+
+    assert len(categories) == 1
+    assert categories[0].name == "Тест"
+    assert len(categories[0].products) == 1
+    assert categories[0].products[0].name == "Товар"
+
+
+def test_load_from_json_file_not_found():
+    """Тест при отсутствии файла"""
+    from src.classes import load_from_json
+    categories = load_from_json("nonexistent.json")
+    assert categories == []
+
+
+def test_load_from_json_invalid_format(tmp_path):
+    """Тест при неверном формате JSON"""
+    json_file = tmp_path / "invalid.json"
+    with open(json_file, 'w', encoding='utf-8') as f:
+        f.write("это не json")
+
+    from src.classes import load_from_json
+    categories = load_from_json(str(json_file))
+    assert categories == []
+
+
+def test_load_from_json_missing_keys(tmp_path):
+    """Тест при отсутствии обязательных полей"""
+    json_data = [{"name": "Тест"}]  # нет products
+
+    import json
+    json_file = tmp_path / "missing.json"
+    with open(json_file, 'w', encoding='utf-8') as f:
+        json.dump(json_data, f)
+
+    from src.classes import load_from_json
+    categories = load_from_json(str(json_file))
+    assert categories == []
+
+
+def test_category_with_empty_products():
+    """Тест категории без товаров"""
+    Category.category_count = 0
+    Category.product_count = 0
+
+    category = Category("Пустая", "Нет товаров", [])
+
+    assert category.name == "Пустая"
+    assert len(category.products) == 0
+    assert Category.category_count == 1
+    assert Category.product_count == 0
