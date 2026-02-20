@@ -70,23 +70,18 @@ def test_load_from_json_success(tmp_path):
         {
             "name": "Тест",
             "description": "Описание",
-            "products": [
-                {
-                    "name": "Товар",
-                    "description": "Описание товара",
-                    "price": 100.0,
-                    "quantity": 5
-                }
-            ]
+            "products": [{"name": "Товар", "description": "Описание товара", "price": 100.0, "quantity": 5}],
         }
     ]
 
     import json
+
     json_file = tmp_path / "test.json"
-    with open(json_file, 'w', encoding='utf-8') as f:
+    with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f)
 
     from src.classes import load_from_json
+
     categories = load_from_json(str(json_file))
 
     assert len(categories) == 1
@@ -98,6 +93,7 @@ def test_load_from_json_success(tmp_path):
 def test_load_from_json_file_not_found():
     """Тест при отсутствии файла"""
     from src.classes import load_from_json
+
     categories = load_from_json("nonexistent.json")
     assert categories == []
 
@@ -105,10 +101,11 @@ def test_load_from_json_file_not_found():
 def test_load_from_json_invalid_format(tmp_path):
     """Тест при неверном формате JSON"""
     json_file = tmp_path / "invalid.json"
-    with open(json_file, 'w', encoding='utf-8') as f:
+    with open(json_file, "w", encoding="utf-8") as f:
         f.write("это не json")
 
     from src.classes import load_from_json
+
     categories = load_from_json(str(json_file))
     assert categories == []
 
@@ -118,11 +115,13 @@ def test_load_from_json_missing_keys(tmp_path):
     json_data = [{"name": "Тест"}]  # нет products
 
     import json
+
     json_file = tmp_path / "missing.json"
-    with open(json_file, 'w', encoding='utf-8') as f:
+    with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f)
 
     from src.classes import load_from_json
+
     categories = load_from_json(str(json_file))
     assert categories == []
 
