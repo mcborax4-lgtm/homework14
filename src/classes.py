@@ -85,6 +85,7 @@ class Category:
 
         result = []
         for product in self.__products:
+            # формат должен быть такой: "Продукт, 80000.0 руб. Остаток: 5 шт."
             result.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.")
 
         return "\n".join(result)
