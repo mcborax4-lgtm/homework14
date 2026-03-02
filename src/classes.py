@@ -105,8 +105,12 @@ class Category:
         return "\n".join(result)
 
     def __str__(self) -> str:
-        """Возвращает строковое представление категории"""
-        return f"{self.name}, количество продуктов: {Category.product_count} шт."
+        """
+        Возвращает строковое представление категории
+        Считает общее количество товаров на складе (сумму quantity всех продуктов)
+        """
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
 
     # Для дополнительного задания (итератор)
     def __iter__(self):

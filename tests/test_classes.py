@@ -254,16 +254,24 @@ def test_product_str():
 
 
 def test_category_str():
-    """Тест строкового представления категории"""
+    """Тест строкового представления категории."""
     # Сбрасываем счетчики
     Category.category_count = 0
     Category.product_count = 0
 
-    product1 = Product("Телефон", "Смартфон", 50000.0, 10)
-    product2 = Product("Ноутбук", "Компьютер", 80000.0, 5)
+    product1 = Product("Телефон", "Смартфон", 50000.0, 10)  # quantity = 10
+    product2 = Product("Ноутбук", "Компьютер", 80000.0, 5)  # quantity = 5
     category = Category("Электроника", "Гаджеты", [product1, product2])
 
-    expected = "Электроника, количество продуктов: 2 шт."
+    # Ожидаем сумму quantity: 10 + 5 = 15
+    expected = "Электроника, количество продуктов: 15 шт."
+    assert str(category) == expected
+
+
+def test_category_str_empty():
+    """Тест строкового представления пустой категории."""
+    category = Category("Пустая", "Нет товаров", [])
+    expected = "Пустая, количество продуктов: 0 шт."
     assert str(category) == expected
 
 
