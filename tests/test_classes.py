@@ -244,3 +244,65 @@ def test_products_property_with_products():
 
     expected = "Телефон, 50000.0 руб. Остаток: 10 шт."
     assert expected in category.products
+
+
+def test_product_str():
+    """Тест строкового представления продукта"""
+    product = Product("Телефон", "Смартфон", 50000.0, 10)
+    expected = "Телефон, 50000.0 руб. Остаток: 10 шт."
+    assert str(product) == expected
+
+
+def test_category_str():
+    """Тест строкового представления категории."""
+    # Сбрасываем счетчики
+    Category.category_count = 0
+    Category.product_count = 0
+
+    product1 = Product("Телефон", "Смартфон", 50000.0, 10)  # quantity = 10
+    product2 = Product("Ноутбук", "Компьютер", 80000.0, 5)  # quantity = 5
+    category = Category("Электроника", "Гаджеты", [product1, product2])
+
+    # Ожидаем сумму quantity: 10 + 5 = 15
+    expected = "Электроника, количество продуктов: 15 шт."
+    assert str(category) == expected
+
+
+def test_category_str_empty():
+    """Тест строкового представления пустой категории."""
+    category = Category("Пустая", "Нет товаров", [])
+    expected = "Пустая, количество продуктов: 0 шт."
+    assert str(category) == expected
+
+
+def test_product_add():
+    """Тест сложения продуктов (общая стоимость)"""
+    product_a = Product("A", "Товар A", 100.0, 10)  # 100 * 10 = 1000
+    product_b = Product("B", "Товар B", 200.0, 2)  # 200 * 2 = 400
+
+    result = product_a + product_b
+    assert result == 1400.0
+
+
+def test_product_add_with_different_types():
+    """Тест сложения продукта с не-продуктом"""
+    product = Product("A", "Товар A", 100.0, 10)
+
+    with pytest.raises(TypeError):
+        _ = product + 123
+
+
+# Дополнительное задание — тест для итератора
+def test_category_iteration():
+    """Тест итерации по товарам категории"""
+    product1 = Product("Телефон", "Смартфон", 50000.0, 10)
+    product2 = Product("Ноутбук", "Компьютер", 80000.0, 5)
+    category = Category("Электроника", "Гаджеты", [product1, product2])
+
+    products_list = []
+    for product in category:
+        products_list.append(product)
+
+    assert len(products_list) == 2
+    assert products_list[0].name == "Телефон"
+    assert products_list[1].name == "Ноутбук"

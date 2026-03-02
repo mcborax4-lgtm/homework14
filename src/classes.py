@@ -57,6 +57,20 @@ class Product:
             quantity=product_data["quantity"],
         )
 
+    def __str__(self) -> str:
+        """Возвращает строковое представление продукта"""
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __add__(self, other: "Product") -> float:
+        """
+        Складывает общую стоимость двух продуктов
+        """
+        if not isinstance(other, Product):
+            raise TypeError("Можно складывать только с продуктами")
+
+        total = (self.price * self.quantity) + (other.price * other.quantity)
+        return total
+
 
 class Category:
     """Класс для описания категории товаров"""
@@ -85,9 +99,32 @@ class Category:
 
         result = []
         for product in self.__products:
+            # Формат должен быть такой: "Продукт, 80000.0 руб. Остаток: 5 шт."
             result.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.")
 
         return "\n".join(result)
+
+    def __str__(self) -> str:
+        """
+        Возвращает строковое представление категории
+        Считает общее количество товаров на складе (сумму quantity всех продуктов)
+        """
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
+
+    # Для дополнительного задания (итератор)
+    def __iter__(self):
+        """Возвращает итератор для товаров категории"""
+        self._index = 0
+        return self
+
+    def __next__(self):
+        """Возвращает следующий товар при итерации"""
+        if self._index >= len(self.__products):
+            raise StopIteration
+        product = self.__products[self._index]
+        self._index += 1
+        return product
 
 
 def load_from_json(file_path: str) -> List[Category]:
