@@ -1,5 +1,4 @@
 from pathlib import Path
-
 from src.classes import Category, load_from_json
 
 
@@ -20,19 +19,20 @@ def main():
         categories = load_from_json(str(json_path))
 
         for category in categories:
-            print(f"\n{category.name}")
+            print(f"\n📁 {category.name}")
             print(f"   {category.description}")
-            print(f"   Товары ({len(category.products)} шт.):")
+            print(f"   Товары:")
 
-            for product in category.products:
-                print(f"   {product.name}")
-                print(f"   {product.price} руб. | {product.quantity} шт.")
+            # ✅ Используем итератор (работает через __iter__)
+            for product in category:
+                print(f"   • {product.name}")
+                print(f"     {product.price} руб. | {product.quantity} шт.")
     else:
-        print(f"Файл {json_path} не найден")
+        print(f"❌ Файл {json_path} не найден")
 
     print("\n" + "=" * 60)
-    print(f"Всего категорий: {Category.category_count}")
-    print(f"Всего товаров: {Category.product_count}")
+    print(f"📊 Всего категорий: {Category.category_count}")
+    print(f"📊 Всего товаров: {Category.product_count}")
     print("=" * 60)
 
 
