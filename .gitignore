@@ -1,25 +1,13 @@
-# created by virtualenv automatically
-*
 # Byte-compiled
 __pycache__/
 *.py[cod]
 
-# Virtual environments
-.venv/
-venv/
-.env
-
-# IDE
-.idea/
-.vscode/
-
-# Testing
+# Coverage
 .coverage
 htmlcov/
 .pytest_cache/
 
-# Poetry
-poetry.lock
-
-
+# IDE
+.idea/
 *.iml
+.vscode/
