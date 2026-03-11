@@ -6,15 +6,9 @@ import json
 from src.classes import Category, Product, Smartphone, LawnGrass, load_from_json
 
 
-# ==== ПРИНУДИТЕЛЬНЫЙ СБРОС СЧЁТЧИКОВ ====
-Category.category_count = 0
-Category.product_count = 0
-# =========================================
-
-
 @pytest.fixture(autouse=True)
 def reset_counters():
-    """Сбрасывает счётчики категорий и продуктов перед каждым тестом"""
+    """Сбрасывает счетчики категорий и продуктов перед каждым тестом"""
     Category.category_count = 0
     Category.product_count = 0
     yield
@@ -39,15 +33,18 @@ def test_category_initialization():
 
     assert category.name == "Электроника"
     assert category.description == "Товары для дома"
-    # Проверяем через приватный атрибут (для тестов)
     assert len(category._Category__products) == 2
-    # Проверяем наличие в строковом представлении
+    assert Category.category_count == 1
+    assert Category.product_count == 2
     assert "Телефон" in category.products
     assert "Ноутбук" in category.products
 
 
 def test_category_counters():
     """Тест подсчета количества категорий и товаров"""
+    Category.category_count = 0
+    Category.product_count = 0
+
     product1 = Product("Телефон", "Смартфон", 50000.0, 10)
     product2 = Product("Ноутбук", "Компьютер", 80000.0, 5)
     product3 = Product("Книга", "Фантастика", 500.0, 20)
@@ -57,11 +54,11 @@ def test_category_counters():
 
     assert Category.category_count == 2
     assert Category.product_count == 3
-
-    assert category1.name == "Электроника"
-    assert category2.name == "Книги"
     assert len(category1._Category__products) == 2
     assert len(category2._Category__products) == 1
+    assert "Телефон" in category1.products
+    assert "Ноутбук" in category1.products
+    assert "Книга" in category2.products
 
 
 def test_product_attributes_types():
@@ -76,31 +73,29 @@ def test_product_attributes_types():
 
 def test_load_from_json_success(tmp_path):
     """Тест успешной загрузки из JSON"""
+    Category.category_count = 0
+    Category.product_count = 0
+
     json_data = [
         {
-            "name": "Тест",
-            "description": "Описание",
-            "products": [
-                {
-                    "name": "Товар",
-                    "description": "Описание товара",
-                    "price": 100.0,
-                    "quantity": 5
-                }
-            ]
+            "name": "Тестовая категория",
+            "description": "Описание категории",
+            "products": [{"name": "Тестовый товар", "description": "Описание товара", "price": 100.0, "quantity": 5}],
         }
     ]
 
     json_file = tmp_path / "test.json"
-    with open(json_file, 'w', encoding='utf-8') as f:
+    with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f)
 
     categories = load_from_json(str(json_file))
 
     assert len(categories) == 1
-    assert categories[0].name == "Тест"
+    assert categories[0].name == "Тестовая категория"
     assert len(categories[0]._Category__products) == 1
-    assert categories[0]._Category__products[0].name == "Товар"
+    assert categories[0]._Category__products[0].name == "Тестовый товар"
+    assert Category.category_count == 1
+    assert Category.product_count == 1
 
 
 def test_load_from_json_file_not_found():
@@ -112,7 +107,7 @@ def test_load_from_json_file_not_found():
 def test_load_from_json_invalid_format(tmp_path):
     """Тест при неверном формате JSON"""
     json_file = tmp_path / "invalid.json"
-    with open(json_file, 'w', encoding='utf-8') as f:
+    with open(json_file, "w", encoding="utf-8") as f:
         f.write("это не json")
 
     categories = load_from_json(str(json_file))
@@ -139,6 +134,139 @@ def test_category_with_empty_products():
     assert len(category._Category__products) == 0
     assert Category.category_count == 1
     assert Category.product_count == 0
+
+
+def test_new_product_classmethod():
+    """Тест класс-метода new_product"""
+    data = {"name": "Новый товар", "description": "Описание", "price": 200.0, "quantity": 10}
+
+    product = Product.new_product(data)
+
+    assert product.name == "Новый товар"
+    assert product.price == 200.0
+    assert product.quantity == 10
+
+
+def test_new_product_with_duplicates():
+    """Тест создания продукта с проверкой дубликатов"""
+    existing_product = Product("Телефон", "Старый", 50000.0, 10)
+    existing_products = [existing_product]
+
+    data = {"name": "Телефон", "description": "Новый", "price": 55000.0, "quantity": 5}
+
+    result = Product.new_product(data, existing_products)
+
+    assert result is existing_product
+    assert result.quantity == 15
+    assert result.price == 55000.0
+
+
+def test_new_product_with_duplicates_lower_price():
+    """Тест создания продукта с дубликатом, но меньшей ценой"""
+    existing_product = Product("Телефон", "Старый", 50000.0, 10)
+    existing_products = [existing_product]
+
+    data = {"name": "Телефон", "description": "Новый", "price": 45000.0, "quantity": 5}
+
+    result = Product.new_product(data, existing_products)
+
+    assert result.price == 50000.0
+    assert result.quantity == 15
+
+
+def test_new_product_without_duplicates():
+    """Тест создания нового продукта без дубликатов"""
+    data = {"name": "Планшет", "description": "Новый", "price": 30000.0, "quantity": 7}
+
+    result = Product.new_product(data)
+
+    assert result.name == "Планшет"
+    assert result.price == 30000.0
+    assert result.quantity == 7
+
+
+def test_price_setter_negative(monkeypatch):
+    """Тест установки отрицательной цены"""
+    product = Product("Тест", "Описание", 100.0, 5)
+
+    monkeypatch.setattr("builtins.input", lambda _: "n")
+
+    product.price = -50
+    assert product.price == 100.0
+
+
+def test_price_setter_decrease_confirmed(monkeypatch):
+    """Тест понижения цены с подтверждением"""
+    product = Product("Тест", "Описание", 100.0, 5)
+
+    monkeypatch.setattr("builtins.input", lambda _: "y")
+
+    product.price = 80.0
+    assert product.price == 80.0
+
+
+def test_price_setter_decrease_canceled(monkeypatch):
+    """Тест отмены понижения цены"""
+    product = Product("Тест", "Описание", 100.0, 5)
+
+    monkeypatch.setattr("builtins.input", lambda _: "n")
+
+    product.price = 80.0
+    assert product.price == 100.0
+
+
+def test_add_product_method():
+    """Тест метода add_product"""
+    category = Category("Тест", "Описание", [])
+    product = Product("Новый", "Товар", 100.0, 5)
+
+    category.add_product(product)
+
+    assert len(category._Category__products) == 1
+    assert category._Category__products[0].name == "Новый"
+    assert Category.product_count == 1
+
+
+def test_products_property_empty():
+    """Тест геттера products для пустой категории"""
+    category = Category("Пустая", "Нет товаров", [])
+    assert category.products == "Нет товаров"
+
+
+def test_products_property_with_products():
+    """Тест геттера products с товарами"""
+    product = Product("Телефон", "Смартфон", 50000.0, 10)
+    category = Category("Электроника", "Гаджеты", [product])
+
+    expected = "Телефон, 50000.0 руб. Остаток: 10 шт."
+    assert expected in category.products
+
+
+def test_product_str():
+    """Тест строкового представления продукта"""
+    product = Product("Телефон", "Смартфон", 50000.0, 10)
+    expected = "Телефон, 50000.0 руб. Остаток: 10 шт."
+    assert str(product) == expected
+
+
+def test_category_str():
+    """Тест строкового представления категории"""
+    Category.category_count = 0
+    Category.product_count = 0
+
+    product1 = Product("Телефон", "Смартфон", 50000.0, 10)
+    product2 = Product("Ноутбук", "Компьютер", 80000.0, 5)
+    category = Category("Электроника", "Гаджеты", [product1, product2])
+
+    expected = "Электроника, количество продуктов: 15 шт."
+    assert str(category) == expected
+
+
+def test_category_str_empty():
+    """Тест строкового представления пустой категории"""
+    category = Category("Пустая", "Нет товаров", [])
+    expected = "Пустая, количество продуктов: 0 шт."
+    assert str(category) == expected
 
 
 def test_smartphone_creation():
@@ -179,22 +307,6 @@ def test_lawn_grass_creation():
     assert grass.country == "Россия"
     assert grass.germination_period == "7-10 дней"
     assert grass.color == "Зеленый"
-
-
-def test_product_str():
-    """Тест строкового представления продукта"""
-    product = Product("Телефон", "Смартфон", 50000.0, 10)
-    assert str(product) == "Телефон, 50000.0 руб. Остаток: 10 шт."
-
-
-def test_category_str():
-    """Тест строкового представления категории"""
-    product1 = Product("Телефон", "Смартфон", 50000.0, 10)
-    product2 = Product("Ноутбук", "Компьютер", 80000.0, 5)
-    category = Category("Электроника", "Гаджеты", [product1, product2])
-
-    expected = "Электроника, количество продуктов: 15 шт."
-    assert str(category) == expected
 
 
 def test_product_add_same_type():
@@ -239,18 +351,28 @@ def test_add_product_inherited():
     assert "iPhone" in cat.products
 
 
-def test_price_setter_negative():
-    """Тест установки отрицательной цены"""
-    product = Product("Тест", "Описание", 100.0, 5)
-    product.price = -50
-    assert product.price == 100.0
-
-
 def test_price_setter_positive():
     """Тест установки положительной цены"""
     product = Product("Тест", "Описание", 100.0, 5)
     product.price = 150.0
     assert product.price == 150.0
+
+
+def test_product_add():
+    """Тест сложения продуктов (общая стоимость)"""
+    product_a = Product("A", "Товар A", 100.0, 10)
+    product_b = Product("B", "Товар B", 200.0, 2)
+
+    result = product_a + product_b
+    assert result == 1400.0
+
+
+def test_product_add_with_different_types():
+    """Тест сложения продукта с не-продуктом"""
+    product = Product("A", "Товар A", 100.0, 10)
+
+    with pytest.raises(TypeError):
+        _ = product + 123
 
 
 def test_category_iteration():

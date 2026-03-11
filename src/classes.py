@@ -3,33 +3,70 @@ from typing import List, Optional
 
 
 class Product:
-    """Базовый класс для товара"""
+    """Класс для описания товара"""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
         self.name = name
         self.description = description
-        self._price = price
+        self.__price = price  # Приватный атрибут
         self.quantity = quantity
 
     @property
     def price(self) -> float:
-        return self._price
+        """Геттер для цены"""
+        return self.__price
 
     @price.setter
     def price(self, new_price: float) -> None:
+        """Сеттер для цены с проверкой"""
         if new_price <= 0:
             print("Цена не должна быть нулевая или отрицательная")
             return
-        self._price = new_price
+
+        if new_price < self.__price:
+            # Дополнительное задание — подтверждение понижения цены
+            answer = input(f"Понизить цену с {self.__price} до {new_price}? (y/n): ")
+            if answer.lower() == "y":
+                self.__price = new_price
+                print("Цена обновлена")
+            else:
+                print("Отмена понижения цены")
+        else:
+            self.__price = new_price
+
+    @classmethod
+    def new_product(cls, product_data: dict, existing_products: Optional[list] = None):
+        """
+        Создаёт новый продукт из словаря с проверкой дубликатов
+        """
+        if existing_products:
+            for existing in existing_products:
+                if existing.name == product_data["name"]:
+                    existing.quantity += product_data["quantity"]
+                    if product_data["price"] > existing.price:
+                        existing.price = product_data["price"]
+                    return existing
+
+        return cls(
+            name=product_data["name"],
+            description=product_data["description"],
+            price=product_data["price"],
+            quantity=product_data["quantity"],
+        )
 
     def __str__(self) -> str:
+        """Возвращает строковое представление продукта"""
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
     def __add__(self, other: "Product") -> float:
+        """
+        Складывает общую стоимость двух продуктов
+        """
         if not isinstance(other, Product):
             raise TypeError("Можно складывать только с продуктами")
         if type(self) is not type(other):
             raise TypeError("Нельзя складывать товары разных типов")
+
         return self.price * self.quantity + other.price * other.quantity
 
 
@@ -86,36 +123,45 @@ class LawnGrass(Product):
 
 
 class Category:
-    """Класс категории"""
+    """Класс для описания категории товаров"""
 
     category_count = 0
     product_count = 0
 
-    def __init__(self, name: str, description: str, products: Optional[List[Product]] = None):
+    def __init__(self, name: str, description: str, products: Optional[list] = None):
         self.name = name
         self.description = description
-        self.__products = products if products else []
+        self.__products = products if products else []  # Приватный атрибут
 
         Category.category_count += 1
         Category.product_count += len(self.__products)
 
     def add_product(self, product: Product) -> None:
+        """Добавляет товар в категорию"""
         if not isinstance(product, Product):
             raise TypeError("Можно добавлять только объекты класса Product или его наследников")
+
         self.__products.append(product)
         Category.product_count += 1
 
     @property
     def products(self) -> str:
+        """Возвращает строку со списком товаров"""
         if not self.__products:
             return "Нет товаров"
-        return "\n".join(str(p) for p in self.__products)
+
+        result = []
+        for product in self.__products:
+            result.append(f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт.")
+
+        return "\n".join(result)
 
     def __str__(self) -> str:
-        total_qty = sum(p.quantity for p in self.__products)
-        return f"{self.name}, количество продуктов: {total_qty} шт."
+        """Возвращает строковое представление категории"""
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
 
-    # Для итерации
+    # Итератор
     def __iter__(self):
         self._index = 0
         return self
