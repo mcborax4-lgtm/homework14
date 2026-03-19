@@ -1,5 +1,6 @@
 import json
 from typing import List, Optional
+
 from .abstract_base import BaseProduct
 from .mixins import CreationMixin
 
@@ -8,7 +9,8 @@ class Product(CreationMixin, BaseProduct):
     """Класс для описания товара"""
 
     def __init__(self, name: str, description: str, price: float, quantity: int):
-        # Сначала вызываем миксин (через super)
+        if quantity <= 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
         super().__init__()
         self.name = name
         self.description = description
@@ -28,7 +30,7 @@ class Product(CreationMixin, BaseProduct):
         if new_price < self.__price:
             # Запрашиваем подтверждение
             answer = input(f"Понизить цену с {self.__price} до {new_price}? (y/n): ")
-            if answer.lower() == 'y':
+            if answer.lower() == "y":
                 self.__price = new_price
                 print("Цена обновлена")
             else:
@@ -153,6 +155,17 @@ class Category:
         self._index += 1
         return product
 
+    def average_price(self) -> float:
+        """
+        Возвращает среднюю цену всех товаров в категории
+        Если товаров нет, возвращает 0
+        """
+        try:
+            total = sum(product.price for product in self.__products)
+            return total / len(self.__products)
+        except ZeroDivisionError:
+            return 0.0
+
 
 def load_from_json(file_path: str) -> List[Category]:
     categories = []
@@ -160,10 +173,7 @@ def load_from_json(file_path: str) -> List[Category]:
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
         for cat_data in data:
-            products = [
-                Product(p["name"], p["description"], p["price"], p["quantity"])
-                for p in cat_data["products"]
-            ]
+            products = [Product(p["name"], p["description"], p["price"], p["quantity"]) for p in cat_data["products"]]
             categories.append(Category(cat_data["name"], cat_data["description"], products))
     except Exception as e:
         print(f"Ошибка загрузки: {e}")
