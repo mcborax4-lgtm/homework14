@@ -388,3 +388,40 @@ def test_category_iteration():
     assert len(products_list) == 2
     assert products_list[0].name == "Телефон"
     assert products_list[1].name == "Ноутбук"
+
+def test_product_creation_mixin(capsys):
+    """Тест миксина: при создании объекта должно печататься сообщение"""
+    Product("Тест", "Описание", 100.0, 5)
+    captured = capsys.readouterr()
+    assert "Создан объект Product с параметрами:" in captured.out
+
+
+def test_smartphone_creation_mixin(capsys):
+    """Тест миксина для наследника"""
+    Smartphone(
+        name="iPhone",
+        description="Смартфон",
+        price=100000.0,
+        quantity=2,
+        efficiency=3.2,
+        model="15 Pro",
+        memory=256,
+        color="Серый"
+    )
+    captured = capsys.readouterr()
+    assert "Создан объект Smartphone с параметрами:" in captured.out
+
+
+def test_base_product_abstract():
+    """Проверка что BaseProduct абстрактный (нельзя создать)"""
+    from src.abstract_base import BaseProduct
+    with pytest.raises(TypeError):
+        BaseProduct()  # type: ignore
+
+
+def test_product_implements_abstract_methods():
+    """Проверка что Product реализует все абстрактные методы"""
+    product = Product("Тест", "Описание", 100.0, 5)
+    assert hasattr(product, "__str__")
+    assert hasattr(product, "__add__")
+    assert hasattr(product, "price")
