@@ -1,9 +1,12 @@
 """
 Тесты для классов Product и Category
 """
-import pytest
+
 import json
-from src.classes import Category, Product, Smartphone, LawnGrass, load_from_json
+
+import pytest
+
+from src.classes import Category, LawnGrass, Product, Smartphone, load_from_json
 
 
 @pytest.fixture(autouse=True)
@@ -119,7 +122,7 @@ def test_load_from_json_missing_keys(tmp_path):
     json_data = [{"name": "Тест"}]
 
     json_file = tmp_path / "missing.json"
-    with open(json_file, 'w', encoding='utf-8') as f:
+    with open(json_file, "w", encoding="utf-8") as f:
         json.dump(json_data, f)
 
     categories = load_from_json(str(json_file))
@@ -279,7 +282,7 @@ def test_smartphone_creation():
         efficiency=3.2,
         model="15 Pro",
         memory=256,
-        color="Серый"
+        color="Серый",
     )
 
     assert phone.name == "iPhone 15"
@@ -299,7 +302,7 @@ def test_lawn_grass_creation():
         quantity=20,
         country="Россия",
         germination_period="7-10 дней",
-        color="Зеленый"
+        color="Зеленый",
     )
 
     assert grass.name == "Газон спортивный"
@@ -389,6 +392,7 @@ def test_category_iteration():
     assert products_list[0].name == "Телефон"
     assert products_list[1].name == "Ноутбук"
 
+
 def test_product_creation_mixin(capsys):
     """Тест миксина: при создании объекта должно печататься сообщение"""
     Product("Тест", "Описание", 100.0, 5)
@@ -406,7 +410,7 @@ def test_smartphone_creation_mixin(capsys):
         efficiency=3.2,
         model="15 Pro",
         memory=256,
-        color="Серый"
+        color="Серый",
     )
     captured = capsys.readouterr()
     assert "Создан объект Smartphone с параметрами:" in captured.out
@@ -415,6 +419,7 @@ def test_smartphone_creation_mixin(capsys):
 def test_base_product_abstract():
     """Проверка что BaseProduct абстрактный (нельзя создать)"""
     from src.abstract_base import BaseProduct
+
     with pytest.raises(TypeError):
         BaseProduct()  # type: ignore
 
@@ -425,3 +430,29 @@ def test_product_implements_abstract_methods():
     assert hasattr(product, "__str__")
     assert hasattr(product, "__add__")
     assert hasattr(product, "price")
+
+
+def test_product_zero_quantity():
+    """Тест: создание товара с quantity=0 вызывает исключение"""
+    with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+        Product("Тест", "Описание", 100.0, 0)
+
+
+def test_product_negative_quantity():
+    """Тест: отрицательное quantity тоже вызывает исключение"""
+    with pytest.raises(ValueError, match="Товар с нулевым количеством не может быть добавлен"):
+        Product("Тест", "Описание", 100.0, -5)
+
+
+def test_category_average_price():
+    """Тест среднего ценника в категории с товарами"""
+    p1 = Product("A", "", 100.0, 1)
+    p2 = Product("B", "", 200.0, 1)
+    cat = Category("Тест", "", [p1, p2])
+    assert cat.average_price() == 150.0
+
+
+def test_category_average_price_empty():
+    """Тест среднего ценника в пустой категории (должен быть 0)"""
+    cat = Category("Пусто", "", [])
+    assert cat.average_price() == 0.0

@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from src.classes import Category, load_from_json
 
 
@@ -21,7 +22,7 @@ def main():
         for category in categories:
             print(f"\n📁 {category.name}")
             print(f"   {category.description}")
-            print(f"   Товары:")
+            print("   Товары:")
 
             # ✅ Используем итератор (работает через __iter__)
             for product in category:
